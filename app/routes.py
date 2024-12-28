@@ -103,3 +103,31 @@ def subset_font():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500 
+
+@main.route('/delete/<font_name>', methods=['DELETE'])
+def delete_font(font_name):
+    try:
+        font_path = os.path.join(current_app.config['FONTS_DIR'], secure_filename(font_name))
+        if os.path.exists(font_path):
+            os.remove(font_path)
+            return jsonify({'message': 'Font deleted successfully'})
+        else:
+            return jsonify({'error': 'Font file not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/download/<font_name>')
+def download_font(font_name):
+    try:
+        font_path = os.path.join(current_app.config['FONTS_DIR'], secure_filename(font_name))
+        if os.path.exists(font_path):
+            return send_file(
+                font_path,
+                as_attachment=True,
+                download_name=font_name,
+                mimetype='application/x-font-ttf'
+            )
+        else:
+            return jsonify({'error': 'Font file not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500 

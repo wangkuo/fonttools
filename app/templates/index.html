@@ -34,6 +34,8 @@
                 </select>
                 <div class="mt-3">
                     <button class="btn btn-info" onclick="getMetadata()">获取元信息</button>
+                    <button class="btn btn-success" onclick="downloadFont()">下载字体</button>
+                    <button class="btn btn-danger" onclick="deleteFont()">删除字体</button>
                 </div>
                 <div id="metadataResult" class="mt-3"></div>
             </div>
@@ -141,6 +143,48 @@ function createSubset() {
                 </div>
             `;
         }
+    });
+}
+
+function downloadFont() {
+    const fontName = document.getElementById('fontSelect').value;
+    if (!fontName) {
+        alert('请选择字体');
+        return;
+    }
+    
+    window.location.href = `/download/${fontName}`;
+}
+
+function deleteFont() {
+    const fontSelect = document.getElementById('fontSelect');
+    const fontName = fontSelect.value;
+    if (!fontName) {
+        alert('请选择字体');
+        return;
+    }
+    
+    if (!confirm('确定要删除这个字体文件吗？')) {
+        return;
+    }
+
+    fetch(`/delete/${fontName}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            alert('字体删除成功');
+            // 从选择框中移除该选项
+            fontSelect.remove(fontSelect.selectedIndex);
+            // 清空元数据显示
+            document.getElementById('metadataResult').innerHTML = '';
+        } else {
+            alert(`错误：${data.error}`);
+        }
+    })
+    .catch(error => {
+        alert('删除失败：' + error);
     });
 }
 </script>
