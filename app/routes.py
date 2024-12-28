@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, send_file
+from flask import Blueprint, render_template, request, jsonify, send_file, current_app
 from fontTools.ttLib import TTFont
 import os
 from werkzeug.utils import secure_filename
@@ -8,7 +8,6 @@ from fontTools import subset
 main = Blueprint('main', __name__)
 
 ALLOWED_EXTENSIONS = {'ttf', 'otf'}
-FONTS_DIR = 'app/fonts'
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -16,11 +15,12 @@ def allowed_file(filename):
 @main.route('/')
 def index():
     # 检查字体文件夹是否存在
-    if not os.path.exists(FONTS_DIR):
-        os.makedirs(FONTS_DIR)
+    fonts_dir = current_app.config['FONTS_DIR']
+    if not os.path.exists(fonts_dir):
+        os.makedirs(fonts_dir)
     
     # 获取字体文件列表
-    fonts = [f for f in os.listdir(FONTS_DIR) if allowed_file(f)]
+    fonts = [f for f in os.listdir(fonts_dir) if allowed_file(f)]
     return render_template('index.html', fonts=fonts)
 
 @main.route('/upload', methods=['POST'])
@@ -34,14 +34,14 @@ def upload_font():
         
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file.save(os.path.join(FONTS_DIR, filename))
+        file.save(os.path.join(current_app.config['FONTS_DIR'], filename))
         return jsonify({'message': 'File uploaded successfully'})
     
     return jsonify({'error': 'Invalid file type'}), 400
 
 @main.route('/metadata/<font_name>')
 def get_metadata(font_name):
-    font_path = os.path.join(FONTS_DIR, font_name)
+    font_path = os.path.join(current_app.config['FONTS_DIR'], font_name)
     try:
         font = TTFont(font_path)
         metadata = {
@@ -72,9 +72,9 @@ def subset_font():
         return jsonify({'error': 'Missing parameters'}), 400
         
     try:
-        font_path = os.path.join(FONTS_DIR, font_name)
+        font_path = os.path.join(current_app.config['FONTS_DIR'], font_name)
         new_filename = f"subset_{font_name}"
-        new_path = os.path.join(FONTS_DIR, new_filename)
+        new_path = os.path.join(current_app.config['FONTS_DIR'], new_filename)
         
         # 使用 fonttools.subset 创建子集
         options = subset.Options()

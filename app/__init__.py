@@ -7,7 +7,7 @@ def create_app():
     
     # 从环境变量获取 SECRET_KEY，如果没有则使用默认值
     app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key')
-    app.config['UPLOAD_FOLDER'] = 'app/fonts'
+    app.config['FONTS_DIR'] = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fonts')
     
     # 初始化 Bootstrap
     Bootstrap5(app)

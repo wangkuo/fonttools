@@ -203,4 +203,4 @@ cython_debug/
 .pypirc
 
 # 字体文件夹
-app/fonts/
+fonts/
