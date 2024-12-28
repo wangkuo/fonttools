@@ -1,0 +1,4 @@
+flask==3.1.0
+fonttools==4.55.3
+Bootstrap-Flask==2.4.1
+gunicorn==23.0.0

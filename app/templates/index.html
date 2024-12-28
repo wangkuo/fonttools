@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <!-- 上传字体 -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                上传字体文件
+            </div>
+            <div class="card-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <input type="file" class="form-control" id="fontFile" accept=".ttf,.otf">
+                    </div>
+                    <button type="submit" class="btn btn-primary">上传</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 字体列表 -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                可用字体
+            </div>
+            <div class="card-body">
+                <select class="form-select" id="fontSelect">
+                    <option value="">选择字体...</option>
+                    {% for font in fonts %}
+                    <option value="{{ font }}">{{ font }}</option>
+                    {% endfor %}
+                </select>
+                <div class="mt-3">
+                    <button class="btn btn-info" onclick="getMetadata()">获取元信息</button>
+                </div>
+                <div id="metadataResult" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 字体子集化 -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                创建字体子集
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">选择字体</label>
+                    <select class="form-select" id="subsetFontSelect">
+                        <option value="">选择字体...</option>
+                        {% for font in fonts %}
+                        <option value="{{ font }}">{{ font }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">输入需要保留的文字</label>
+                    <textarea class="form-control" id="subsetText" rows="3"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="createSubset()">生成子集</button>
+                <div id="subsetResult" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('uploadForm').onsubmit = function(e) {
+    e.preventDefault();
+    const formData = new FormData();
+    const fileInput = document.getElementById('fontFile');
+    formData.append('font', fileInput.files[0]);
+
+    fetch('/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            alert('上传成功');
+            location.reload();
+        } else {
+            alert('上传失败: ' + data.error);
+        }
+    });
+};
+
+function getMetadata() {
+    const fontName = document.getElementById('fontSelect').value;
+    if (!fontName) {
+        alert('请选择字体');
+        return;
+    }
+
+    fetch(`/metadata/${fontName}`)
+        .then(response => response.json())
+        .then(data => {
+            const result = document.getElementById('metadataResult');
+            result.innerHTML = `
+                <h5>字体信息：</h5>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+        });
+}
+
+function createSubset() {
+    const fontName = document.getElementById('subsetFontSelect').value;
+    const text = document.getElementById('subsetText').value;
+
+    if (!fontName || !text) {
+        alert('请选择字体并输入文字');
+        return;
+    }
+
+    fetch('/subset', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            font_name: fontName,
+            text: text
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            document.getElementById('subsetResult').innerHTML = `
+                <div class="alert alert-success">
+                    子集创建成功！新文件名：${data.filename}
+                </div>
+            `;
+        } else {
+            document.getElementById('subsetResult').innerHTML = `
+                <div class="alert alert-danger">
+                    错误：${data.error}
+                </div>
+            `;
+        }
+    });
+}
+</script>
+{% endblock %} 
