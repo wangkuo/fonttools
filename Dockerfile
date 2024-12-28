@@ -4,6 +4,9 @@ WORKDIR /app
 
 RUN mkdir -p /app/fonts
 
+# 设置环境变量
+ENV FLASK_SECRET_KEY=your-production-secret-key
+
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
@@ -13,4 +16,4 @@ VOLUME /app/fonts
 
 EXPOSE 5000
 
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"] 
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "app.wsgi:app"] 

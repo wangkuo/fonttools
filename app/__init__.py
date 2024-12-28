@@ -1,9 +1,12 @@
 from flask import Flask
 from flask_bootstrap import Bootstrap5
+import os
 
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = 'your-secret-key'
+    
+    # 从环境变量获取 SECRET_KEY，如果没有则使用默认值
+    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key')
     app.config['UPLOAD_FOLDER'] = 'app/fonts'
     
     # 初始化 Bootstrap
