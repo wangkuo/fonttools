@@ -117,17 +117,16 @@ def delete_font(font_name):
         return jsonify({'error': str(e)}), 500
 
 @main.route('/download/<font_name>')
-def download_font(font_name):
+@main.route('/fonts/<font_name>')
+def serve_font(font_name):
     try:
         font_path = os.path.join(current_app.config['FONTS_DIR'], secure_filename(font_name))
         if os.path.exists(font_path):
             return send_file(
                 font_path,
-                as_attachment=True,
-                download_name=font_name,
                 mimetype='application/x-font-ttf'
             )
         else:
             return jsonify({'error': 'Font file not found'}), 404
     except Exception as e:
-        return jsonify({'error': str(e)}), 500 
+        return jsonify({'error': str(e)}), 500

@@ -37,6 +37,16 @@
                     <button class="btn btn-success" onclick="downloadFont()">下载字体</button>
                     <button class="btn btn-danger" onclick="deleteFont()">删除字体</button>
                 </div>
+                <!-- 添加预览功能 -->
+                <div class="mt-3">
+                    <label class="form-label">预览文字</label>
+                    <textarea class="form-control mb-2" id="previewText" rows="2" placeholder="输入要预览的文字...">你好，世界！</textarea>
+                    <button class="btn btn-primary" onclick="previewFont()">预览字体</button>
+                </div>
+                <div id="previewResult" class="mt-3">
+                    <div id="previewContainer" style="font-size: 24px; min-height: 50px;"></div>
+                    <div id="unmatchedChars" class="text-danger mt-2"></div>
+                </div>
                 <div id="metadataResult" class="mt-3"></div>
             </div>
         </div>
@@ -187,5 +197,67 @@ function deleteFont() {
         alert('删除失败：' + error);
     });
 }
+
+function previewFont() {
+    const fontName = document.getElementById('fontSelect').value;
+    const text = document.getElementById('previewText').value || '你好，世界！';
+    const previewContainer = document.getElementById('previewContainer');
+    const unmatchedCharsDiv = document.getElementById('unmatchedChars');
+    
+    if (!fontName) {
+        alert('请选择字体');
+        return;
+    }
+
+    // 创建样式
+    const styleId = 'preview-style';
+    let styleElement = document.getElementById(styleId);
+    if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = styleId;
+        document.head.appendChild(styleElement);
+    }
+
+    // 定义字体
+    const fontFamilyName = `PreviewFont_${fontName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    styleElement.textContent = `
+        @font-face {
+            font-family: '${fontFamilyName}';
+            src: url('/fonts/${fontName}') format('truetype');
+        }
+    `;
+
+    // 应用字体并显示文本
+    previewContainer.style.fontFamily = fontFamilyName;
+    previewContainer.textContent = text;
+
+    // 检查字体是否加载成功
+    document.fonts.ready.then(() => {
+        const font = new FontFace(fontFamilyName, `url(/fonts/${fontName})`);
+        font.load().then(() => {
+            // 检查每个字符是否能被字体渲染
+            let unmatchedChars = [];
+            for (let char of text) {
+                if (!document.fonts.check(`1em "${fontFamilyName}"`, char)) {
+                    unmatchedChars.push(char);
+                }
+            }
+            
+            // 显示不匹配的字符
+            if (unmatchedChars.length > 0) {
+                unmatchedCharsDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        以下字符在当前字体中不存在：<br>
+                        <span class="font-monospace">${unmatchedChars.join(' ')}</span>
+                    </div>`;
+            } else {
+                unmatchedCharsDiv.innerHTML = '';
+            }
+        }).catch(err => {
+            console.error('字体加载失败:', err);
+            previewContainer.innerHTML = '<div class="alert alert-danger">字体加载失败</div>';
+        });
+    });
+}
 </script>
-{% endblock %} 
+{% endblock %}
